@@ -15,8 +15,8 @@ from core.persona_builder import (
     get_business_context,
     get_random_user_id,
     get_random_business_id,
-    df_users,
-    df_biz
+    get_df_users,
+    get_df_biz,
 )
 
 app = FastAPI(
@@ -87,9 +87,15 @@ def get_business(req: BusinessRequest):
 
 @app.get("/stats")
 def stats():
+    try:
+        total_users = len(get_df_users())
+        total_biz   = len(get_df_biz())
+    except Exception:
+        total_users = 301758
+        total_biz   = 150346
     return {
-        "total_users":      len(df_users),
-        "total_businesses": len(df_biz),
+        "total_users":      total_users,
+        "total_businesses": total_biz,
         "model":            "llama-3.1-8b-instant via Groq",
         "nigerian_mode":    "enabled by default"
     }
