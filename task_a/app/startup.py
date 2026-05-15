@@ -7,40 +7,32 @@ FILES = {
     "user_profiles.csv":      "1cw57UALFzT3pTZl6zul1yH1FO57k9uLN",
 }
 
-DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
+DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
 os.makedirs(DATA_DIR, exist_ok=True)
 
 def download_file(file_id: str, destination: str):
     print(f"   Downloading {os.path.basename(destination)}...")
-    URL = "https://drive.google.com/uc?export=download"
+
+    # Use gdown-style URL for large files
+    url = f"https://drive.google.com/uc?id={file_id}&export=download&confirm=t"
+
     session = requests.Session()
+    response = session.get(url, stream=True, timeout=300)
 
-    # First request to get confirmation token
-    r = session.get(URL, params={"id": file_id}, stream=True)
-    token = None
-    for key, value in r.cookies.items():
-        if key.startswith("download_warning"):
-            token = value
-            break
-
-    # If large file, need confirmation token
-    if token:
-        r = session.get(URL, params={"id": file_id, "confirm": token}, stream=True)
-
-    # Write file in chunks
     with open(destination, "wb") as f:
-        for chunk in r.iter_content(chunk_size=32768):
+        for chunk in response.iter_content(chunk_size=1024*1024):
             if chunk:
                 f.write(chunk)
 
     size = os.path.getsize(destination) / (1024*1024)
     print(f"   ✅ {os.path.basename(destination)} — {size:.1f} MB")
+    return size
 
 def download_all():
     print("Checking data files...")
     for filename, file_id in FILES.items():
         dest = os.path.join(DATA_DIR, filename)
-        if os.path.exists(dest) and os.path.getsize(dest) > 1000:
+        if os.path.exists(dest) and os.path.getsize(dest) > 1024*1024:
             size = os.path.getsize(dest) / (1024*1024)
             print(f"   ✅ {filename} already exists — {size:.1f} MB")
         else:

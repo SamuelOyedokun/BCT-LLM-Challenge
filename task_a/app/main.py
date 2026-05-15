@@ -1,5 +1,4 @@
-# Fix 1: Make static directory path absolute in main.py
-main_a_fixed = '''from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
@@ -7,7 +6,6 @@ from pydantic import BaseModel
 from typing import Optional
 import sys, os
 
-# Fix path resolution for deployment
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, BASE_DIR)
 
@@ -22,8 +20,8 @@ from core.persona_builder import (
 )
 
 app = FastAPI(
-    title="BCT LLM Challenge - Task A: User Modeling & Review Simulation",
-    description="Given a user persona and business, simulate realistic Yelp reviews with star ratings.",
+    title="BCT LLM Challenge - Task A",
+    description="User Modeling and Review Simulation Agent",
     version="1.0.0"
 )
 
@@ -95,8 +93,3 @@ def stats():
         "model":            "llama-3.1-8b-instant via Groq",
         "nigerian_mode":    "enabled by default"
     }
-'''
-
-with open("../task_a/app/main.py", "w", encoding="utf-8") as f:
-    f.write(main_a_fixed)
-print("✅ Task A main.py fixed")
