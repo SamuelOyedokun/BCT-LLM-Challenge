@@ -16,13 +16,13 @@ def download_all():
         dest = os.path.join(DATA_DIR, filename)
         if os.path.exists(dest) and os.path.getsize(dest) > 1024*1024:
             size = os.path.getsize(dest) / (1024*1024)
-            print(f"   ✅ {filename} already exists — {size:.1f} MB")
+            print(f"   Already exists: {filename} — {size:.1f} MB")
         else:
             print(f"   Downloading {filename}...")
             url = f"https://drive.google.com/uc?id={file_id}"
-            gdown.download(url, dest, quiet=False, fuzzy=True)
+            gdown.download(url, dest, quiet=False)
             size = os.path.getsize(dest) / (1024*1024)
-            print(f"   ✅ {filename} — {size:.1f} MB")
+            print(f"   Done: {filename} — {size:.1f} MB")
     print("All data files ready.")
 
 if __name__ == "__main__":
