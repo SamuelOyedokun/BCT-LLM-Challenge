@@ -8,15 +8,25 @@ DATA_DIR = BASE_DIR / "data"
 sys.path.insert(0, str(BASE_DIR))
 
 from startup import download_all
-download_all()
 
-print("Loading data files...")
-df_users = pd.read_csv(DATA_DIR / "user_profiles.csv")
-df_tips  = pd.read_csv(DATA_DIR / "tips_with_business.csv")
-df_biz   = pd.read_csv(DATA_DIR / "businesses.csv")
-print(f"   users: {len(df_users):,} | businesses: {len(df_biz):,} | tips: {len(df_tips):,}")
+df_users = None
+df_tips  = None
+df_biz   = None
+
+def load_data():
+    global df_users, df_tips, df_biz
+    if df_users is not None:
+        return
+    download_all()
+    print("Loading data files...")
+    df_users = pd.read_csv(DATA_DIR / "user_profiles.csv")
+    df_biz   = pd.read_csv(DATA_DIR / "businesses.csv")
+    # Load only 50K rows of tips to stay within 512MB memory limit
+    df_tips  = pd.read_csv(DATA_DIR / "tips_with_business.csv", nrows=50000)
+    print(f"   users: {len(df_users):,} | businesses: {len(df_biz):,} | tips: {len(df_tips):,}")
 
 def get_user_persona(user_id: str) -> dict:
+    load_data()
     user_row = df_users[df_users["user_id"] == user_id]
     if user_row.empty:
         return {"error": f"User {user_id} not found"}
@@ -53,6 +63,7 @@ def get_user_persona(user_id: str) -> dict:
     }
 
 def get_business_context(business_id: str) -> dict:
+    load_data()
     biz_row = df_biz[df_biz["business_id"] == business_id]
     if biz_row.empty:
         return {"error": f"Business {business_id} not found"}
@@ -68,7 +79,17 @@ def get_business_context(business_id: str) -> dict:
     }
 
 def get_random_user_id() -> str:
+    load_data()
     return str(df_users.sample(1).iloc[0]["user_id"])
 
 def get_random_business_id() -> str:
+    load_data()
     return str(df_biz.sample(1).iloc[0]["business_id"])
+
+def get_df_users():
+    load_data()
+    return df_users
+
+def get_df_biz():
+    load_data()
+    return df_biz
