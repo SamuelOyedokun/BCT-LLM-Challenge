@@ -1,13 +1,14 @@
-persona_code = '''import pandas as pd
+import pandas as pd
 import os
+import sys
 from pathlib import Path
-from startup import download_all
-
-# Download data if not present
-download_all()
 
 BASE_DIR = Path(__file__).parent.parent
 DATA_DIR = BASE_DIR / "data"
+sys.path.insert(0, str(BASE_DIR))
+
+from startup import download_all
+download_all()
 
 print("Loading data files...")
 df_users = pd.read_csv(DATA_DIR / "user_profiles.csv")
@@ -19,12 +20,10 @@ def get_user_persona(user_id: str) -> dict:
     user_row = df_users[df_users["user_id"] == user_id]
     if user_row.empty:
         return {"error": f"User {user_id} not found"}
-
     u = user_row.iloc[0]
     user_tips = df_tips[df_tips["user_id"] == user_id].tail(5)
     recent_tips       = user_tips["text"].tolist()
     recent_businesses = user_tips["name"].tolist() if "name" in user_tips.columns else []
-
     avg_stars = float(u["avg_biz_stars"])
     if avg_stars >= 4.0:
         tone = "enthusiastic and positive"
@@ -32,7 +31,6 @@ def get_user_persona(user_id: str) -> dict:
         tone = "balanced and moderate"
     else:
         tone = "critical and demanding"
-
     tip_count = int(u["tip_count"])
     if tip_count >= 20:
         reviewer_type = "power reviewer"
@@ -40,7 +38,6 @@ def get_user_persona(user_id: str) -> dict:
         reviewer_type = "regular reviewer"
     else:
         reviewer_type = "occasional reviewer"
-
     return {
         "user_id":             str(user_id),
         "tip_count":           tip_count,
@@ -55,12 +52,10 @@ def get_user_persona(user_id: str) -> dict:
         "recent_businesses":   recent_businesses,
     }
 
-
 def get_business_context(business_id: str) -> dict:
     biz_row = df_biz[df_biz["business_id"] == business_id]
     if biz_row.empty:
         return {"error": f"Business {business_id} not found"}
-
     b = biz_row.iloc[0]
     return {
         "business_id":  str(business_id),
@@ -72,14 +67,8 @@ def get_business_context(business_id: str) -> dict:
         "review_count": int(b["review_count"]),
     }
 
-
 def get_random_user_id() -> str:
     return str(df_users.sample(1).iloc[0]["user_id"])
 
 def get_random_business_id() -> str:
     return str(df_biz.sample(1).iloc[0]["business_id"])
-'''
-
-with open("../task_a/app/core/persona_builder.py", "w", encoding="utf-8") as f:
-    f.write(persona_code)
-print("✅ persona_builder.py updated")
