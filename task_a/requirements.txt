@@ -1,4 +1,4 @@
-reqs = """fastapi
+fastapi
 uvicorn
 groq
 pandas
@@ -6,8 +6,3 @@ python-dotenv
 pydantic
 aiofiles
 requests
-"""
-
-with open("task_a/requirements.txt", "w", encoding="utf-8") as f:
-    f.write(reqs)
-print("✅ requirements.txt fixed")
