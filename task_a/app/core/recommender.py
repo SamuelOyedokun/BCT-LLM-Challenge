@@ -10,32 +10,25 @@ from startup import download_all
 from core.config import GROQ_API_KEY, MODEL_NAME, TEMPERATURE
 
 import pandas as pd
-import chromadb
-from sentence_transformers import SentenceTransformer
+import numpy as np
 from groq import Groq
 import random
+import json
 
-df_users   = None
-collection = None
-model      = None
+df_users  = None
+df_biz    = None
 groq_client = None
 
 def load_data():
-    global df_users, collection, model, groq_client
+    global df_users, df_biz, groq_client
     if df_users is not None:
         return
     download_all()
-    print("Loading recommender components...")
-
-    DB_PATH = str(BASE_DIR.parent / "vectordb")
-
+    print("Loading Task B components...")
     df_users = pd.read_csv(DATA_DIR / "user_profiles.csv")
-
-    model = SentenceTransformer("all-MiniLM-L6-v2")
-    client_db  = chromadb.PersistentClient(path=DB_PATH)
-    collection = client_db.get_collection("businesses")
+    df_biz   = pd.read_csv(DATA_DIR / "businesses.csv")
     groq_client = Groq(api_key=GROQ_API_KEY)
-    print(f"   Recommender ready — {collection.count():,} businesses indexed")
+    print(f"   Task B ready — {len(df_biz):,} businesses")
 
 NIGERIAN_FLAVOUR = [
     "Respond like a friendly Nigerian concierge who knows the city well.",
@@ -65,28 +58,44 @@ def get_user_context(user_id: str) -> dict:
         "tip_count":           int(u["tip_count"]),
     }
 
-def retrieve_candidates(query: str, category_hint: str = "", n: int = 10) -> list:
+def retrieve_candidates(user_request: str, category_hint: str = "", n: int = 15) -> list:
     load_data()
-    search_query = f"{query} {category_hint}".strip()
-    embedding    = model.encode([search_query]).tolist()
-    results      = collection.query(query_embeddings=embedding, n_results=n)
+    keywords = (user_request + " " + category_hint).lower().split()
+
+    def score_row(row):
+        text = str(row.get("categories", "")).lower() + " " + str(row.get("name", "")).lower()
+        return sum(1 for kw in keywords if kw in text)
+
+    df_sample = df_biz.sample(min(5000, len(df_biz)), random_state=42).copy()
+    df_sample["score"] = df_sample.apply(score_row, axis=1)
+    df_sample = df_sample[df_sample["score"] > 0]
+
+    if len(df_sample) == 0:
+        df_sample = df_biz.sample(n, random_state=42).copy()
+
+    df_top = df_sample.nlargest(n, ["score", "stars"])
+
     candidates = []
-    for i in range(len(results["ids"][0])):
-        meta = results["metadatas"][0][i]
+    for _, row in df_top.iterrows():
         candidates.append({
-            "business_id": results["ids"][0][i],
-            "name":        meta.get("name", ""),
-            "city":        meta.get("city", ""),
-            "state":       meta.get("state", ""),
-            "categories":  meta.get("categories", ""),
-            "stars":       meta.get("stars", 0),
-            "review_count":meta.get("review_count", 0),
+            "name":       str(row.get("name", "")),
+            "city":       str(row.get("city", "")),
+            "state":      str(row.get("state", "")),
+            "categories": str(row.get("categories", "")),
+            "stars":      float(row.get("stars", 0)),
+            "review_count": int(row.get("review_count", 0)),
         })
     return candidates
 
-def rank_and_explain(user_context, candidates, user_request,
-                     conversation_history=[], nigerian_mode=True) -> dict:
+def recommend(user_id: str, user_request: str,
+              conversation_history: list = [],
+              nigerian_mode: bool = True) -> dict:
     load_data()
+    user_context = get_user_context(user_id)
+    candidates   = retrieve_candidates(
+        user_request, user_context["favorite_categories"], n=15
+    )
+
     candidate_text = ""
     for i, c in enumerate(candidates, 1):
         candidate_text += (
@@ -144,7 +153,6 @@ Respond in this EXACT JSON format:
 Return ONLY valid JSON.
 """
 
-    import json
     response = groq_client.chat.completions.create(
         model=MODEL_NAME,
         messages=[{"role": "user", "content": prompt}],
@@ -153,13 +161,7 @@ Return ONLY valid JSON.
     )
     raw  = response.choices[0].message.content.strip()
     raw  = raw.replace("```json", "").replace("```", "").strip()
-    return json.loads(raw)
-
-def recommend(user_id, user_request, conversation_history=[], nigerian_mode=True) -> dict:
-    user_context = get_user_context(user_id)
-    candidates   = retrieve_candidates(user_request, user_context["favorite_categories"], n=15)
-    result       = rank_and_explain(user_context, candidates, user_request,
-                                    conversation_history, nigerian_mode)
+    result = json.loads(raw)
     result["user_id"]       = user_id
     result["is_cold_start"] = user_context["is_cold_start"]
     result["user_city"]     = user_context["most_common_city"]
