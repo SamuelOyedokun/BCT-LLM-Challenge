@@ -376,10 +376,10 @@ let conversationHistory = [];
 let currentUserId = "";
 
 async function loadStats() {
-    const r = await fetch(`${BASE}/stats`);
+    const r = await fetch(`${BASE}/task-b-stats`);
     const d = await r.json();
-    document.getElementById("statBiz").textContent   = d.total_businesses_indexed.toLocaleString();
-    document.getElementById("statUsers").textContent = d.total_users.toLocaleString();
+    document.getElementById("statBiz").textContent   = (d.total_businesses_indexed || d.total_businesses || 0).toLocaleString();
+    document.getElementById("statUsers").textContent = (d.total_users || 0).toLocaleString();
 }
 
 async function loadUser() {
