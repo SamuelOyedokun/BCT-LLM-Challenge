@@ -65,22 +65,22 @@ def retrieve_candidates(user_request: str, n: int = 15,
     # Build search query from request + recent conversation context
     full_query = user_request
 
-    # If request is vague (cheaper, better, another), use last assistant topic
+    # If request is vague, use last user message as context
     vague_words = {"cheaper","better","another","different","similar",
                    "else","more","other","again","instead"}
     request_words = set(user_request.lower().split())
 
     if request_words & vague_words and conversation_history:
-        # Pull topic from last user message
         for turn in reversed(conversation_history):
             if turn.get("role") == "user":
-                full_query = turn["content"] + " " + user_request
+                prev = turn["content"]
+                # Only use previous if it has real content words
+                prev_words = [w for w in prev.lower().split()
+                              if len(w) > 3 and w not in vague_words]
+                if prev_words:
+                    full_query = prev + " " + user_request
                 break
-
-    # Add user favourite category as soft hint
-    fav_cats = user_context.get("favorite_categories", "")
-    if fav_cats and fav_cats != "Unknown":
-        full_query = full_query + " " + fav_cats[:50]
+    # Do NOT add user categories to avoid pulling wrong domain
 
     keywords = full_query.lower().split()
     stop_words = {"a","an","the","me","my","i","want","need","good","great",
