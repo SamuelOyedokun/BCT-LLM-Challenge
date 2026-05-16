@@ -3,486 +3,93 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Task A - Review Simulation Agent</title>
+    <title>NaijaReview Intelligence System</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        * { margin:0; padding:0; box-sizing:border-box; }
         body {
             font-family: 'Segoe UI', sans-serif;
             background: #0f0f1a;
             color: #e0e0e0;
             min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
         }
-        header {
-            background: linear-gradient(135deg, #1a1a2e, #16213e);
-            padding: 24px 40px;
-            border-bottom: 2px solid #00d4ff;
-        }
-        header h1 {
-            font-size: 1.6rem;
-            color: #00d4ff;
-            letter-spacing: 1px;
-        }
-        header p {
-            color: #888;
-            font-size: 0.9rem;
-            margin-top: 4px;
-        }
-        .badge {
-            display: inline-block;
-            background: #00d4ff22;
-            color: #00d4ff;
-            border: 1px solid #00d4ff55;
-            padding: 2px 10px;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            margin-top: 8px;
-        }
-        .container {
-            max-width: 900px;
-            margin: 40px auto;
-            padding: 0 20px;
+        h1 { font-size:2rem; color:#00d4ff; margin-bottom:8px; text-align:center; }
+        p  { color:#888; margin-bottom:40px; text-align:center; }
+        .cards {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            max-width: 800px;
+            width: 100%;
         }
         .card {
             background: #1a1a2e;
+            border-radius: 16px;
+            padding: 32px;
             border: 1px solid #2a2a4a;
-            border-radius: 12px;
-            padding: 28px;
-            margin-bottom: 24px;
         }
-        .card h2 {
-            color: #00d4ff;
-            font-size: 1rem;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            margin-bottom: 20px;
+        .card h2 { font-size:1.1rem; margin-bottom:8px; }
+        .card.a h2 { color:#00d4ff; }
+        .card.b h2 { color:#a855f7; }
+        .card p { font-size:0.85rem; color:#888; margin-bottom:20px; }
+        .tag {
+            display:inline-block;
+            padding:3px 10px;
+            border-radius:20px;
+            font-size:0.7rem;
+            margin-bottom:16px;
         }
-        .form-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 16px;
-            margin-bottom: 16px;
+        .card.a .tag { background:#00d4ff22; color:#00d4ff; border:1px solid #00d4ff44; }
+        .card.b .tag { background:#a855f722; color:#a855f7; border:1px solid #a855f744; }
+        .btn {
+            display:block;
+            text-align:center;
+            padding:12px;
+            border-radius:8px;
+            text-decoration:none;
+            font-weight:600;
+            font-size:0.9rem;
+            margin-bottom:8px;
         }
-        .form-group {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
+        .card.a .btn { background:#00d4ff; color:#0f0f1a; }
+        .card.b .btn { background:#a855f7; color:white; }
+        .btn-outline {
+            background:transparent;
+            border:1px solid #444;
+            color:#888;
         }
-        label {
-            font-size: 0.8rem;
-            color: #888;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-        input, select {
-            background: #0f0f1a;
-            border: 1px solid #2a2a4a;
-            border-radius: 8px;
-            padding: 10px 14px;
-            color: #e0e0e0;
-            font-size: 0.9rem;
-            outline: none;
-            transition: border 0.2s;
-        }
-        input:focus, select:focus {
-            border-color: #00d4ff;
-        }
-        .btn-row {
-            display: flex;
-            gap: 12px;
-            margin-top: 8px;
-        }
-        button {
-            padding: 10px 24px;
-            border-radius: 8px;
-            border: none;
-            cursor: pointer;
-            font-size: 0.9rem;
-            font-weight: 600;
-            transition: all 0.2s;
-        }
-        .btn-primary {
-            background: #00d4ff;
-            color: #0f0f1a;
-        }
-        .btn-primary:hover { background: #00b8d9; }
-        .btn-secondary {
-            background: transparent;
-            color: #00d4ff;
-            border: 1px solid #00d4ff;
-        }
-        .btn-secondary:hover { background: #00d4ff11; }
-        .btn-primary:disabled {
-            background: #444;
-            color: #888;
-            cursor: not-allowed;
-        }
-        .toggle-row {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 16px;
-        }
-        .toggle {
-            position: relative;
-            width: 44px;
-            height: 24px;
-        }
-        .toggle input { opacity: 0; width: 0; height: 0; }
-        .slider {
-            position: absolute;
-            inset: 0;
-            background: #2a2a4a;
-            border-radius: 24px;
-            cursor: pointer;
-            transition: 0.3s;
-        }
-        .slider:before {
-            content: "";
-            position: absolute;
-            width: 18px; height: 18px;
-            left: 3px; top: 3px;
-            background: white;
-            border-radius: 50%;
-            transition: 0.3s;
-        }
-        input:checked + .slider { background: #00d4ff; }
-        input:checked + .slider:before { transform: translateX(20px); }
-        .result-box {
-            background: #0f0f1a;
-            border: 1px solid #2a2a4a;
-            border-radius: 10px;
-            padding: 20px;
-            margin-top: 20px;
-            display: none;
-        }
-        .result-box.show { display: block; }
-        .stars {
-            font-size: 1.5rem;
-            margin-bottom: 8px;
-        }
-        .review-text {
-            font-size: 1rem;
-            line-height: 1.7;
-            color: #ccc;
-            font-style: italic;
-            border-left: 3px solid #00d4ff;
-            padding-left: 16px;
-            margin: 12px 0;
-        }
-        .meta-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-            margin-top: 16px;
-        }
-        .meta-item {
-            background: #1a1a2e;
-            border-radius: 8px;
-            padding: 10px 14px;
-        }
-        .meta-item .label {
-            font-size: 0.7rem;
-            color: #666;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-        .meta-item .value {
-            font-size: 0.9rem;
-            color: #00d4ff;
-            margin-top: 2px;
-            font-weight: 600;
-        }
-        .persona-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
-        }
-        .persona-item {
-            background: #0f0f1a;
-            border-radius: 8px;
-            padding: 10px 14px;
-        }
-        .persona-item .label {
-            font-size: 0.7rem;
-            color: #666;
-            text-transform: uppercase;
-        }
-        .persona-item .value {
-            font-size: 0.85rem;
-            color: #e0e0e0;
-            margin-top: 2px;
-        }
-        .loading {
-            display: none;
-            color: #00d4ff;
-            font-size: 0.9rem;
-            margin-top: 12px;
-        }
-        .loading.show { display: block; }
-        .error {
-            color: #ff6b6b;
-            font-size: 0.85rem;
-            margin-top: 8px;
-            display: none;
-        }
-        .error.show { display: block; }
-        .nigerian-tag {
-            display: inline-block;
-            background: #00ff8822;
-            color: #00ff88;
-            border: 1px solid #00ff8844;
-            padding: 2px 8px;
-            border-radius: 20px;
-            font-size: 0.7rem;
-            margin-left: 8px;
-        }
-        .stats-row {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 16px;
-            margin-bottom: 24px;
-        }
-        .stat-card {
-            background: #1a1a2e;
-            border: 1px solid #2a2a4a;
-            border-radius: 10px;
-            padding: 20px;
-            text-align: center;
-        }
-        .stat-card .num {
-            font-size: 1.6rem;
-            font-weight: 700;
-            color: #00d4ff;
-        }
-        .stat-card .lbl {
-            font-size: 0.75rem;
-            color: #666;
-            text-transform: uppercase;
-            margin-top: 4px;
+        .badge {
+            text-align:center;
+            margin-top:32px;
+            font-size:0.75rem;
+            color:#444;
         }
     </style>
 </head>
 <body>
+    <h1>NaijaReview Intelligence System</h1>
+    <p>DSN × BCT LLM Agent Challenge — Hackathon 3.0</p>
 
-<header>
-    <h1>BCT LLM Agent Challenge</h1>
-    <p>Task A &mdash; User Modeling & Review Simulation Agent</p>
-    <span class="badge">Powered by LLaMA 3.1 via Groq</span>
-</header>
-
-<div class="container">
-
-    <!-- Stats -->
-    <div class="stats-row" id="statsRow">
-        <div class="stat-card">
-            <div class="num" id="statUsers">--</div>
-            <div class="lbl">User Profiles</div>
+    <div class="cards">
+        <div class="card a">
+            <span class="tag">Task A</span>
+            <h2>User Modeling & Review Simulation</h2>
+            <p>Simulate realistic Yelp reviews with star ratings based on user personas and business context.</p>
+            <a href="/task-a" class="btn">Open Task A</a>
+            <a href="/docs#/default/simulate_simulate_review_post" class="btn btn-outline">API Docs</a>
         </div>
-        <div class="stat-card">
-            <div class="num" id="statBiz">--</div>
-            <div class="lbl">Businesses</div>
-        </div>
-        <div class="stat-card">
-            <div class="num" id="statModel">LLaMA 3.1</div>
-            <div class="lbl">Model</div>
+        <div class="card b">
+            <span class="tag">Task B</span>
+            <h2>Personalised Recommendation Agent</h2>
+            <p>Get contextual, conversational recommendations powered by semantic search and LLaMA reasoning.</p>
+            <a href="/task-b" class="btn">Open Task B</a>
+            <a href="/docs#/default/get_recommendations_recommend_post" class="btn btn-outline">API Docs</a>
         </div>
     </div>
-
-    <!-- Simulate Review -->
-    <div class="card">
-        <h2>Simulate Review</h2>
-
-        <div class="form-row">
-            <div class="form-group">
-                <label>User ID</label>
-                <input type="text" id="userId" placeholder="Leave blank for random" />
-            </div>
-            <div class="form-group">
-                <label>Business ID</label>
-                <input type="text" id="businessId" placeholder="Leave blank for random" />
-            </div>
-        </div>
-
-        <div class="toggle-row">
-            <label class="toggle">
-                <input type="checkbox" id="nigerianMode" checked />
-                <span class="slider"></span>
-            </label>
-            <span style="font-size:0.9rem">Nigerian Mode
-                <span class="nigerian-tag">+bonus marks</span>
-            </span>
-        </div>
-
-        <div class="btn-row">
-            <button class="btn-primary" id="simulateBtn" onclick="simulateReview()">
-                Generate Review
-            </button>
-            <button class="btn-secondary" onclick="loadRandomIds()">
-                Random IDs
-            </button>
-        </div>
-
-        <div class="loading" id="simLoading">Generating review via LLaMA...</div>
-        <div class="error" id="simError"></div>
-
-        <div class="result-box" id="simResult">
-            <div class="stars" id="starDisplay"></div>
-            <div class="review-text" id="reviewText"></div>
-            <div class="meta-grid">
-                <div class="meta-item">
-                    <div class="label">Business</div>
-                    <div class="value" id="metaBiz"></div>
-                </div>
-                <div class="meta-item">
-                    <div class="label">Persona Tone</div>
-                    <div class="value" id="metaTone"></div>
-                </div>
-                <div class="meta-item">
-                    <div class="label">Star Rating</div>
-                    <div class="value" id="metaStars"></div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Get Persona -->
-    <div class="card">
-        <h2>Inspect User Persona</h2>
-        <div class="form-row">
-            <div class="form-group">
-                <label>User ID</label>
-                <input type="text" id="personaUserId" placeholder="Enter user_id" />
-            </div>
-        </div>
-        <div class="btn-row">
-            <button class="btn-primary" onclick="getPersona()">Get Persona</button>
-        </div>
-        <div class="loading" id="personaLoading">Loading persona...</div>
-        <div class="error" id="personaError"></div>
-        <div class="result-box" id="personaResult">
-            <div class="persona-grid" id="personaGrid"></div>
-        </div>
-    </div>
-
-</div>
-
-<script>
-const BASE = "";
-
-async function loadStats() {
-    const r = await fetch(`${BASE}/stats`);
-    const d = await r.json();
-    document.getElementById("statUsers").textContent = d.total_users.toLocaleString();
-    document.getElementById("statBiz").textContent   = d.total_businesses.toLocaleString();
-}
-
-async function loadRandomIds() {
-    const r = await fetch(`${BASE}/random-ids`);
-    const d = await r.json();
-    document.getElementById("userId").value     = d.user_id;
-    document.getElementById("businessId").value = d.business_id;
-}
-
-async function simulateReview() {
-    const btn = document.getElementById("simulateBtn");
-    const loading = document.getElementById("simLoading");
-    const error   = document.getElementById("simError");
-    const result  = document.getElementById("simResult");
-
-    btn.disabled = true;
-    loading.classList.add("show");
-    error.classList.remove("show");
-    result.classList.remove("show");
-
-    try {
-        const payload = {
-            user_id:      document.getElementById("userId").value || null,
-            business_id:  document.getElementById("businessId").value || null,
-            nigerian_mode: document.getElementById("nigerianMode").checked
-        };
-        const r = await fetch(`${BASE}/simulate-review`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload)
-        });
-        const d = await r.json();
-
-        document.getElementById("starDisplay").textContent = "⭐".repeat(d.star_rating);
-        document.getElementById("reviewText").textContent  = d.review_text;
-        document.getElementById("metaBiz").textContent     = d.business_name;
-        document.getElementById("metaTone").textContent    = d.persona_tone;
-        document.getElementById("metaStars").textContent   = `${d.star_rating} / 5`;
-
-        // Fill user ID and business ID for reference
-        document.getElementById("userId").value     = d.user_id;
-        document.getElementById("businessId").value = d.business_id;
-
-        result.classList.add("show");
-    } catch(e) {
-        error.textContent = "Error: " + e.message;
-        error.classList.add("show");
-    } finally {
-        btn.disabled = false;
-        loading.classList.remove("show");
-    }
-}
-
-async function getPersona() {
-    const loading = document.getElementById("personaLoading");
-    const error   = document.getElementById("personaError");
-    const result  = document.getElementById("personaResult");
-    const grid    = document.getElementById("personaGrid");
-
-    const uid = document.getElementById("personaUserId").value
-             || document.getElementById("userId").value;
-
-    if (!uid) {
-        error.textContent = "Please enter a User ID or generate a review first.";
-        error.classList.add("show");
-        return;
-    }
-
-    loading.classList.add("show");
-    error.classList.remove("show");
-    result.classList.remove("show");
-
-    try {
-        const r = await fetch(`${BASE}/get-persona`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ user_id: uid })
-        });
-        const d = await r.json();
-
-        const fields = [
-            ["User ID",      d.user_id],
-            ["Reviews",      d.tip_count],
-            ["Avg Stars",    d.avg_stars],
-            ["Businesses",   d.businesses_visited],
-            ["City",         d.most_common_city],
-            ["Tone",         d.tone],
-            ["Type",         d.reviewer_type],
-            ["Last Active",  d.last_active],
-            ["Fav Category", d.favorite_categories],
-        ];
-
-        grid.innerHTML = fields.map(([label, value]) => `
-            <div class="persona-item">
-                <div class="label">${label}</div>
-                <div class="value">${value}</div>
-            </div>
-        `).join("");
-
-        result.classList.add("show");
-    } catch(e) {
-        error.textContent = "Error: " + e.message;
-        error.classList.add("show");
-    } finally {
-        loading.classList.remove("show");
-    }
-}
-
-loadStats();
-</script>
+    <div class="badge">Powered by LLaMA 3.1 via Groq · ChromaDB · sentence-transformers · FastAPI</div>
 </body>
 </html>
