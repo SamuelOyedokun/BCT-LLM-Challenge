@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
 import sys, os
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -20,8 +20,8 @@ from core.persona_builder import (
 )
 
 app = FastAPI(
-    title="BCT LLM Challenge - Task A",
-    description="User Modeling and Review Simulation Agent",
+    title="BCT LLM Challenge - NaijaReview Intelligence System",
+    description="Task A: Review Simulation | Task B: Recommendation Agent",
     version="1.0.0"
 )
 
@@ -36,6 +36,8 @@ STATIC_DIR = os.path.join(BASE_DIR, "static")
 os.makedirs(STATIC_DIR, exist_ok=True)
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
+# ── Pydantic Models ───────────────────────────────────────────
+
 class ReviewRequest(BaseModel):
     user_id: Optional[str] = None
     business_id: Optional[str] = None
@@ -47,13 +49,26 @@ class PersonaRequest(BaseModel):
 class BusinessRequest(BaseModel):
     business_id: str
 
+class RecommendRequest(BaseModel):
+    user_id: str
+    user_request: str
+    conversation_history: Optional[List[dict]] = []
+    nigerian_mode: Optional[bool] = True
+
+class UserContextRequest(BaseModel):
+    user_id: str
+
+# ── Root ──────────────────────────────────────────────────────
+
 @app.get("/")
 def root():
     return FileResponse(os.path.join(STATIC_DIR, "index.html"))
 
 @app.get("/health")
 def health():
-    return {"status": "ok"}
+    return {"status": "ok", "tasks": ["A", "B"]}
+
+# ── Task A Endpoints ──────────────────────────────────────────
 
 @app.get("/random-ids")
 def random_ids():
@@ -99,3 +114,45 @@ def stats():
         "model":            "llama-3.1-8b-instant via Groq",
         "nigerian_mode":    "enabled by default"
     }
+
+# ── Task B Endpoints ──────────────────────────────────────────
+
+@app.post("/recommend")
+def get_recommendations(req: RecommendRequest):
+    try:
+        from core.recommender import recommend
+        result = recommend(
+            user_id              = req.user_id,
+            user_request         = req.user_request,
+            conversation_history = req.conversation_history,
+            nigerian_mode        = req.nigerian_mode,
+        )
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/user-context")
+def user_context(req: UserContextRequest):
+    from core.recommender import get_user_context
+    return get_user_context(req.user_id)
+
+@app.get("/task-b-stats")
+def task_b_stats():
+    try:
+        from core.recommender import collection, df_users
+        return {
+            "total_businesses_indexed": collection.count(),
+            "total_users":              len(df_users),
+            "model":                    "llama-3.1-8b-instant via Groq",
+            "retrieval":                "ChromaDB + sentence-transformers",
+        }
+    except Exception as e:
+        return {"error": str(e)}
+
+@app.get("/task-a")
+def task_a_page():
+    return FileResponse(os.path.join(STATIC_DIR, "task_a.html"))
+
+@app.get("/task-b")
+def task_b_page():
+    return FileResponse(os.path.join(STATIC_DIR, "task_b.html"))
