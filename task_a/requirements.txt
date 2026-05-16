@@ -7,3 +7,5 @@ pydantic
 aiofiles
 requests
 gdown
+sentence-transformers
+chromadb
