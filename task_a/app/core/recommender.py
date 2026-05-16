@@ -58,12 +58,35 @@ def get_user_context(user_id: str) -> dict:
         "tip_count":           int(u["tip_count"]),
     }
 
-def retrieve_candidates(user_request: str, n: int = 15) -> list:
+def retrieve_candidates(user_request: str, n: int = 15,
+                        conversation_history: list = [],
+                        user_context: dict = {}) -> list:
     load_data()
-    # Focus on REQUEST keywords only — not user history
-    keywords = user_request.lower().split()
+    # Build search query from request + recent conversation context
+    full_query = user_request
+
+    # If request is vague (cheaper, better, another), use last assistant topic
+    vague_words = {"cheaper","better","another","different","similar",
+                   "else","more","other","again","instead"}
+    request_words = set(user_request.lower().split())
+
+    if request_words & vague_words and conversation_history:
+        # Pull topic from last user message
+        for turn in reversed(conversation_history):
+            if turn.get("role") == "user":
+                full_query = turn["content"] + " " + user_request
+                break
+
+    # Add user favourite category as soft hint
+    fav_cats = user_context.get("favorite_categories", "")
+    if fav_cats and fav_cats != "Unknown":
+        full_query = full_query + " " + fav_cats[:50]
+
+    keywords = full_query.lower().split()
     stop_words = {"a","an","the","me","my","i","want","need","good","great",
-                  "best","find","looking","for","some","place","to","and","or"}
+                  "best","find","looking","for","some","place","to","and","or",
+                  "cheaper","better","another","different","similar","time",
+                  "this","that","these","those","something","anything"}
     keywords = [k for k in keywords if k not in stop_words and len(k) > 2]
 
     if not keywords:
@@ -110,7 +133,7 @@ def recommend(user_id: str, user_request: str,
               nigerian_mode: bool = True) -> dict:
     load_data()
     user_context = get_user_context(user_id)
-    candidates   = retrieve_candidates(user_request, n=15)
+    candidates   = retrieve_candidates(user_request, n=15, conversation_history=conversation_history, user_context=user_context)
 
     candidate_text = ""
     for i, c in enumerate(candidates, 1):
