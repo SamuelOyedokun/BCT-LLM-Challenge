@@ -28,7 +28,7 @@ def load_data():
     df_users = pd.read_csv(DATA_DIR / "user_profiles.csv")
     df_biz   = pd.read_csv(DATA_DIR / "businesses.csv")
     groq_client = Groq(api_key=GROQ_API_KEY)
-    print(f"   Task B ready — {len(df_biz):,} businesses")
+    print(f"   Task B ready — {len(df_biz):,} businesses | {len(df_users):,} users")
 
 NIGERIAN_FLAVOUR = [
     "Respond like a friendly Nigerian concierge who knows the city well.",
@@ -58,43 +58,59 @@ def get_user_context(user_id: str) -> dict:
         "tip_count":           int(u["tip_count"]),
     }
 
-def retrieve_candidates(user_request: str, category_hint: str = "", n: int = 15) -> list:
+def retrieve_candidates(user_request: str, n: int = 15) -> list:
     load_data()
-    keywords = (user_request + " " + category_hint).lower().split()
+    # Focus on REQUEST keywords only — not user history
+    keywords = user_request.lower().split()
+    stop_words = {"a","an","the","me","my","i","want","need","good","great",
+                  "best","find","looking","for","some","place","to","and","or"}
+    keywords = [k for k in keywords if k not in stop_words and len(k) > 2]
+
+    if not keywords:
+        keywords = ["restaurant", "food"]
 
     def score_row(row):
-        text = str(row.get("categories", "")).lower() + " " + str(row.get("name", "")).lower()
+        text = (str(row.get("categories", "")) + " " + 
+                str(row.get("name", ""))).lower()
         return sum(1 for kw in keywords if kw in text)
 
-    df_sample = df_biz.sample(min(5000, len(df_biz)), random_state=42).copy()
+    df_sample = df_biz.sample(min(8000, len(df_biz)), random_state=42).copy()
     df_sample["score"] = df_sample.apply(score_row, axis=1)
-    df_sample = df_sample[df_sample["score"] > 0]
+    df_top = df_sample[df_sample["score"] > 0]
 
-    if len(df_sample) == 0:
-        df_sample = df_biz.sample(n, random_state=42).copy()
-
-    df_top = df_sample.nlargest(n, ["score", "stars"])
+    if len(df_top) == 0:
+        df_top = df_sample.nlargest(n, "stars")
+    else:
+        df_top = df_top.nlargest(n, ["score", "stars"])
 
     candidates = []
     for _, row in df_top.iterrows():
         candidates.append({
-            "name":       str(row.get("name", "")),
-            "city":       str(row.get("city", "")),
-            "state":      str(row.get("state", "")),
-            "categories": str(row.get("categories", "")),
-            "stars":      float(row.get("stars", 0)),
-            "review_count": int(row.get("review_count", 0)),
+            "name":        str(row.get("name", "")),
+            "city":        str(row.get("city", "")),
+            "state":       str(row.get("state", "")),
+            "categories":  str(row.get("categories", "")),
+            "stars":       float(row.get("stars", 0)),
+            "review_count":int(row.get("review_count", 0)),
         })
     return candidates
+
+def get_stats() -> dict:
+    load_data()
+    return {
+        "total_businesses_indexed": len(df_biz),
+        "total_users":              len(df_users),
+        "model":                    "llama-3.1-8b-instant via Groq",
+        "retrieval":                "Keyword + LLaMA reasoning",
+        "nigerian_mode":            "enabled by default",
+    }
 
 def recommend(user_id: str, user_request: str,
               conversation_history: list = [],
               nigerian_mode: bool = True) -> dict:
     load_data()
     user_context = get_user_context(user_id)
-    candidates   = retrieve_candidates(
-        user_request, user_context["favorite_categories"], n=15
-    )
+    candidates   = retrieve_candidates(user_request, n=15)
 
     candidate_text = ""
     for i, c in enumerate(candidates, 1):
@@ -125,12 +141,12 @@ USER PROFILE:
 
 USER REQUEST: {user_request}
 
-CANDIDATE BUSINESSES:
+CANDIDATE BUSINESSES (matched to user request):
 {candidate_text}
 
 TASK:
-1. Select TOP 5 most relevant businesses
-2. Write a short personalised reason for each
+1. Select TOP 5 businesses that best match the USER REQUEST
+2. Write a short personalised reason for each considering user profile
 3. {nigerian_instruction}
 
 Respond in this EXACT JSON format:
