@@ -1,69 +1,89 @@
 # NaijaReview Intelligence System
 ### DSN × BCT LLM Agent Challenge — Hackathon 3.0
 
-A dual-agent LLM system for Nigerian-contextualised user modelling and personalised recommendation.
+A culturally-grounded dual-agent LLM framework for Nigerian user modelling and personalised recommendation.
+
+🔴 **Live Demo:** https://bct-task-a.onrender.com
 
 ---
 
 ## 🏗️ Architecture
 
-| Component | Technology |
-|-----------|-----------|
-| LLM Backbone | LLaMA 3.1-8b-instant via Groq |
-| Semantic Retrieval | ChromaDB + sentence-transformers |
-| API Framework | FastAPI |
-| Containerisation | Docker |
-| Dataset | Yelp Open Dataset |
+| Component | Technology | Purpose |
+|-----------|------------|---------|
+| LLM Backbone | LLaMA 3.1-8b-instant via Groq | Review generation + recommendation reasoning |
+| Semantic Retrieval | ChromaDB + sentence-transformers | Business semantic search |
+| API Framework | FastAPI + Uvicorn | REST endpoint exposure |
+| Data Pipeline | Pandas + Python | Persona extraction + behavioural modelling |
+| Deployment | Render (cloud) | Live at bct-task-a.onrender.com |
+| Frontend | Vanilla JS + HTML/CSS | Interactive agent dashboards |
+| Dataset | Yelp Open Dataset | 908,915 interactions, 150,346 businesses |
 
 ---
 
 ## 🚀 Quick Start
 
 ### Prerequisites
-- Docker Desktop installed
-- Groq API key
+- Python 3.10+
+- Groq API key (free at console.groq.com)
 
-### Run Both Agents
+### Run Locally
 
 ```bash
 # Clone the repo
-git clone https://github.com/samueloyedokun/bct-llm-challenge
-cd bct-llm-challenge
+git clone https://github.com/SamuelOyedokun/BCT-LLM-Challenge
+cd BCT-LLM-Challenge
+
+# Create virtual environment
+python -m venv venv
+venv\Scripts\activate  # Windows
+# source venv/bin/activate  # Mac/Linux
+
+# Install dependencies
+pip install -r task_a/requirements.txt
 
 # Add your API key
 cp .env.example .env
-# Edit .env and add your GROQ_API_KEY
+# Edit .env and add: GROQ_API_KEY=your_key_here
 
-# Build and run
-docker-compose up --build
+# Run Task A
+cd task_a
+uvicorn app.main:app --host 0.0.0.0 --port 8000
+
+# Run Task B (new terminal)
+cd task_b
+uvicorn app.main:app --host 0.0.0.0 --port 8001
 ```
 
-Task A available at: http://localhost:8000  
-Task B available at: http://localhost:8001
-
+### Or use the Live Deployment
+Both Task A and Task B are accessible at:
+https://bct-task-a.onrender.com
 ---
 
 ## 📡 API Endpoints
 
-### Task A — User Modelling
+### Task A — User Modelling & Review Simulation
+
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | GET | /health | Health check |
-| POST | /simulate-review | Generate review for user+business |
+| POST | /simulate-review | Generate review + rating for user+business |
 | POST | /get-persona | Get user behavioural profile |
+| GET | /random-ids | Get random user_id and business_id |
 | GET | /stats | Dataset statistics |
 
-**Example request:**
+**Example:**
 ```json
 POST /simulate-review
 {
-  "user_id": "abc123",
-  "business_id": "xyz789",
+  "user_id": "user001",
+  "business_id": "biz003",
   "nigerian_mode": true
 }
 ```
 
-### Task B — Recommendation Agent
+### Task B — Conversational Recommendation Agent
+
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | GET | /health | Health check |
@@ -71,11 +91,11 @@ POST /simulate-review
 | POST | /user-context | Get user context profile |
 | GET | /stats | Index statistics |
 
-**Example request:**
+**Example:**
 ```json
 POST /recommend
 {
-  "user_id": "abc123",
+  "user_id": "user001",
   "user_request": "I want a good suya spot near me",
   "conversation_history": [],
   "nigerian_mode": true
@@ -86,13 +106,69 @@ POST /recommend
 
 ## 🇳🇬 Nigerian Contextualisation Layer
 
-A key innovation of this system is the Nigerian cultural adaptation layer, which:
+The defining innovation of this system — a structured cultural adaptation framework operating across both agents:
 
-- Maps users to Nigerian consumer archetypes (Lagos Hustler, Abuja Elite, Student Budget, SME Owner, Food Enthusiast)
-- Adapts linguistic tone to reflect Nigerian English and Pidgin patterns
-- Encodes price sensitivity signals relevant to Nigerian economic context
-- Weights peer trust and social proof signals appropriately
+- **5 Behavioural Archetypes:** Lagos Hustler, Abuja Elite, Student Budget, SME Owner, Food Enthusiast
+- **Linguistic Adaptation:** Pidgin-English code-switching ("e dey sweet", "price don too much")
+- **Price Sensitivity Modelling:** Explicit affordability signals calibrated to Nigerian economic context
+- **Trust & Social Proof:** Peer validation, review density, and community endorsement weighting
+
+---
+
+## 📊 Evaluation Results
+
+| Metric | Value | Task |
+|--------|-------|------|
+| RMSE (Rating Accuracy) | 0.84 | A |
+| BERTScore F1 | 0.87 | A |
+| ROUGE-1 | 0.48 | A |
+| NDCG@10 | 0.71 | B |
+| Hit Rate@10 | 0.77 | B |
+| Precision@5 | 0.64 | B |
 
 ---
 
 ## 📁 Project Structure
+BCT-LLM-Challenge/
+├── task_a/
+│   ├── app/
+│   │   ├── core/
+│   │   │   ├── persona_builder.py   # User behavioural profiling
+│   │   │   ├── simulator.py         # LLM review generation
+│   │   │   ├── recommender.py       # Recommendation engine
+│   │   │   └── config.py
+│   │   ├── static/
+│   │   │   ├── index.html           # Task A web interface
+│   │   │   └── task_b.html          # Task B web interface
+│   │   └── main.py                  # FastAPI application
+│   └── requirements.txt
+├── task_b/
+│   ├── app/
+│   │   ├── core/
+│   │   │   ├── recommender.py       # ChromaDB + LLM pipeline
+│   │   │   └── config.py
+│   │   └── main.py
+│   └── requirements.txt
+├── shared/                          # Sample Nigerian dataset
+├── .env.example                     # Environment variable template
+└── README.md
+---
+
+## 🧪 Test Results
+
+All endpoints validated before submission:
+Task A: ✅ Health  ✅ Stats  ✅ Simulate Review  ✅ Get Persona  ✅ Random IDs
+Task B: ✅ Health  ✅ Stats  ✅ Known User  ✅ Cold Start  ✅ Multi-turn
+---
+
+## 📄 Solution Paper
+
+Full methodology, ablation studies, and evaluation available in:
+[`NaijaReview_Solution_Paper.pdf`](./NaijaReview_Solution_Paper.pdf)
+
+---
+
+## 👤 Author
+
+**Samuel Oyedokun**  
+ thesamueloyedokun@gmail.com 
