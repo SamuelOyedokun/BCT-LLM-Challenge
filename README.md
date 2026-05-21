@@ -128,35 +128,10 @@ The defining innovation of this system — a structured cultural adaptation fram
 
 ---
 
-## 📁 Project Structure
-BCT-LLM-Challenge/
-├── task_a/
-│   ├── app/
-│   │   ├── core/
-│   │   │   ├── persona_builder.py   # User behavioural profiling
-│   │   │   ├── simulator.py         # LLM review generation
-│   │   │   ├── recommender.py       # Recommendation engine
-│   │   │   └── config.py
-│   │   ├── static/
-│   │   │   ├── index.html           # Task A web interface
-│   │   │   └── task_b.html          # Task B web interface
-│   │   └── main.py                  # FastAPI application
-│   └── requirements.txt
-├── task_b/
-│   ├── app/
-│   │   ├── core/
-│   │   │   ├── recommender.py       # ChromaDB + LLM pipeline
-│   │   │   └── config.py
-│   │   └── main.py
-│   └── requirements.txt
-├── shared/                          # Sample Nigerian dataset
-├── .env.example                     # Environment variable template
-└── README.md
----
-
 ## 🧪 Test Results
 
 All endpoints validated before submission:
+
 Task A: ✅ Health  ✅ Stats  ✅ Simulate Review  ✅ Get Persona  ✅ Random IDs
 Task B: ✅ Health  ✅ Stats  ✅ Known User  ✅ Cold Start  ✅ Multi-turn
 ---
