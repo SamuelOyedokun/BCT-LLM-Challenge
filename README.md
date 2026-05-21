@@ -132,8 +132,8 @@ The defining innovation of this system — a structured cultural adaptation fram
 
 All endpoints validated before submission:
 
-**Task A: ✅ Health  ✅ Stats  ✅ Simulate Review  ✅ Get Persona  ✅ Random IDs
-Task B: ✅ Health  ✅ Stats  ✅ Known User  ✅ Cold Start  ✅ Multi-turn**
+Task A: ✅ Health  ✅ Stats  ✅ Simulate Review  ✅ Get Persona  ✅ Random IDs       
+Task B: ✅ Health  ✅ Stats  ✅ Known User  ✅ Cold Start  ✅ Multi-turn
 ---
 
 ## 📄 Solution Paper
